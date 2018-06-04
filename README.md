@@ -1,7 +1,7 @@
 # How to use
 Just run bllshtMyDatabase.py, giving a .sql as first argument containing all the CREATE TABLE commands. You may also give a optional parameter, choosing how many instances of each table must be created.
 ```
-pythonn bllshtMyDatabase.py <.sql with all CREATE TABLE> [Number of instances for each table]
+python bllshtMyDatabase.py <.sql with all CREATE TABLE> [Number of instances for each table]
 ```
 
 # Configuration and customization
