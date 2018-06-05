@@ -5,8 +5,8 @@ python bllshtMyDatabase.py <.sql with all CREATE TABLE> [Number of instances for
 ```
 
 # BEFORE USING
-- Read the "[IMPORTANT NOTES](#IMPORTANT-NOTES)" section @ the end of this README.
-- Verify the "[SUPPORTED DATA TYPES](#Supported-Data-Types)" section @ the middle of this README.
+- Read the "[IMPORTANT NOTES](#important-notes)" section @ the end of this README.
+- Verify the "[SUPPORTED DATA TYPES](#supported-data-types)" section @ the middle of this README.
 
 # Configuration and customization
 You may easily change script parameters just changing values inside the ``scriptConfig'' class inside bllshtMyDatabase.py file.
