@@ -5,7 +5,8 @@ python bllshtMyDatabase.py <.sql with all CREATE TABLE> [Number of instances for
 ```
 
 # BEFORE USING
-Read the "IMPORTANT NOTES SECTION" @ the end of this README.
+- Read the "[IMPORTANT NOTES](#IMPORTANT-NOTES)" section @ the end of this README.
+- Verify the "[SUPPORTED DATA TYPES](#Supported-Data-Types)" section @ the middle of this README.
 
 # Configuration and customization
 You may easily change script parameters just changing values inside the ``scriptConfig'' class inside bllshtMyDatabase.py file.
@@ -90,7 +91,7 @@ ROLLBACK;
 
 Note: Check out "examples/biggerOutputExample.sql" to get a idea of a bigger program output from a much more complex database.
 
-# Supported Types:
+# Supported Data Types
 The program supports the following PostgreSQL data types:
 - SMALLINT
 - INTEGER
@@ -106,6 +107,6 @@ The program supports the following PostgreSQL data types:
 - TIME
 - TIMESTAMP
 
-# IMPORTANT NOTES:
+# IMPORTANT NOTES
 - Every table with SERIAL or BIGSERIAL column types must be brand-new (i.e. the autoincrementing counter must be currently on 1) in order to FOREIGN KEYS pointing to SERIAL/BIGSERIAL columns work,
 - For security, the default configuration of this script is to both start a TRANSACTION at the start of each output file and ROLLBACK at the end. Change this configuration inside the scriptConfig class (within bllshtMyDatabase.py file).
