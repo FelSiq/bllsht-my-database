@@ -11,7 +11,10 @@ CREATE TABLE person(
 
 CREATE TABLE worker(
         cpf CHAR(14),
-        jobsDone INTEGER,
+        jobsDone SMALLINT,
+        piecesMan INTEGER,
+        balance REAL,
+    
         CONSTRAINT pk_worker
                 PRIMARY KEY (cpf),
         CONSTRAINT fk_worker
