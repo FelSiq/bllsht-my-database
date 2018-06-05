@@ -88,6 +88,11 @@ class scriptConfig:
 	# MAX_BIGINT=-2**(8*8)
 	# MIN_YEAR=1900
 	# MAX_YEAR=2050
+	MAX_REAL=1.0e+5-1
+	MIN_REAL=-1.0e+5
+	REAL_PRECISION=2
+	MAX_SMALLINT=2**(8*2)-1
+	MIN_SMALLINT=-2**(8*2)
 	MAX_INT=900000
 	MIN_INT=100000
 	MAX_BIGINT=90000000
@@ -514,13 +519,24 @@ def genValue(
 			return smpVal
 		return quotes(smpVal)
 
+	elif canonicalVT == 'SMALLINT':
+		return str(random.randint(scriptConfig.MIN_SMALLINT, 
+			scriptConfig.MAX_SMALLINT+1))
+
+	elif canonicalVT == 'REAL':
+		val=random.random()
+		val*=(scriptConfig.MAX_REAL-scriptConfig.MIN_REAL)
+		val+=scriptConfig.MIN_REAL
+		val=round(val, scriptConfig.REAL_PRECISION)
+		return str(val)
+
 	elif canonicalVT == 'INTEGER':
 		return str(random.randint(scriptConfig.MIN_INT, 
-			scriptConfig.MAX_INT))
+			scriptConfig.MAX_INT+1))
 
 	elif canonicalVT == 'BIGINT':
 		return str(random.randint(scriptConfig.MIN_BIGINT, 
-			scriptConfig.MAX_BIGINT))
+			scriptConfig.MAX_BIGINT+1))
 
 	elif canonicalVT == 'DATE':
 		return 'to_date (' + quotes(_randDATE()) +\
@@ -533,7 +549,7 @@ def genValue(
 		
 		size=valMaxSize 
 		if canonicalVT == 'VARCHAR':
-			size=random.randint(valMaxSize//2, valMaxSize) \
+			size=random.randint(valMaxSize//2, valMaxSize+1) \
 				if valMaxSize != -1 else scriptConfig.VARCHAR_DEFSIZE
 		if scriptConfig.genRandomChars:
 			# In case the script was configured to generate
