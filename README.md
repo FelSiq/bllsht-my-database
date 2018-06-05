@@ -92,8 +92,10 @@ Note: Check out "examples/biggerOutputExample.sql" to get a idea of a bigger pro
 
 # Supported Types:
 The program supports the following PostgreSQL data types:
+- SMALLINT
 - INTEGER
 - BIGINT
+- REAL
 - DATE
 - SERIAL
 - BIGSERIAL
