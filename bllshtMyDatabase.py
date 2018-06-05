@@ -27,33 +27,32 @@ fake=Faker(locale='pt_BR')
 	without a correspondent function will receive a
 	random text by default.
 """
-specialDataFuncs={
+"""
+	MODEL:
+
+	'columnName_1': {
+		'table_1': genFunctionA, 
+		'table_2': genFunctionB, 
+		'DEFAULT': genFunctionDefault}}
+
+	'columnName_2': genFunctionAllTables
+
+	...
+
+	'columnName_n': {
+		'table_c': genFunctionZ,
+		'table_d': genFunctionW
+		}
 	
-	"""
-		MODEL:
-
-		'columnName_1': {
-			'table_1': genFunctionA, 
-			'table_2': genFunctionB, 
-			'DEFAULT': genFunctionDefault}}
-
-		'columnName_2': genFunctionAllTables
-
-		...
-
-		'columnName_n': {
-			'table_c': genFunctionZ,
-			'table_d': genFunctionW
-			}
-		
-	"""
-
+"""
+specialDataFuncs={
 	'nome': {'equipamento': fake.name, 'DEFAULT': fake.name},
-	'RG': fake.rg,
+	'RG': fake.ssn,
 	'nomeBanda': fake.name,
 	'endereco': fake.address,
 	'endereco': fake.address,
 	'descricao': fake.text,
+	'telefoneCsv': fake.phone_number,
 }
 
 """
@@ -392,7 +391,7 @@ def _randDATE():
 	m=random.randint(1, 12)
 	d=random.randint(1, 31-(m%2+(m==2)))
 	y=random.randint(scriptConfig.MIN_YEAR, 
-		scriptConfig.MAX_YEAR)
+		scriptConfig.MAX_YEAR+1)
 	m=str(m)
 	d=str(d)
 	y=str(y)
@@ -432,6 +431,7 @@ def quotes(string):
 	specified on the CREATE TABLE commands.
 """
 def genValue(
+	tableName,
 	columnName,
 	valType, 
 	valMaxSize, 
@@ -470,6 +470,7 @@ def genValue(
 		partialRes=[]
 		for i in range(arraySize):
 			partialRes.append(genValue(
+				tableName,
 				columnName,
 				valType+additionalDims, 
 				valMaxSize, 
@@ -481,9 +482,25 @@ def genValue(
 	# Check if current column don't have a custom
 	# value generator
 	elif columnName in specialDataFuncs:
-		text=str(specialDataFuncs[columnName]())[:valMaxSize]
-		processed=regex.sub(r"[\n']", ' ', text)
-		return quotes(processed)
+		genObject=specialDataFuncs[columnName]
+		if type(genObject) == type({}):
+			# Nested custom generator configuration
+			if tableName in genObject:
+				genObject=genObject[tableName]
+			elif 'DEFAULT' in genObject:
+				genObject=genObject['DEFAULT']
+			else:
+				genObject=None
+
+		if genObject:
+			text=genObject()
+			text=str(text)[:valMaxSize]
+			processed=regex.sub(r"[\n']", ' ', text)
+			return quotes(processed)
+
+		# In case everything goes wrong.
+		# This is probably due to bad user configurarion.
+		return 'NULL'
 
 	elif regexPat != '':
 		return quotes(rstr.xeger(regexPat))
@@ -542,8 +559,16 @@ def genValue(
 
 	return None
 
-def genCanonicalValue(column, varType, maxSize, permittedVals, regex):
+def genCanonicalValue(
+	tableName,
+	column, 
+	varType, 
+	maxSize, 
+	permittedVals, 
+	regex):
+
 	value=str(genValue(
+		tableName,
 		column,
 		varType, 
 		maxSize,
@@ -634,6 +659,7 @@ def printCommand(
 			while not validValue:
 
 				value=genCanonicalValue( 
+					table,
 					column,
 					curColumn['TYPE'], 
 					curColumn['MAXSIZE'],
@@ -737,6 +763,7 @@ def getFKValues(table, dbFKHandler, genValues, curTable, instNum):
 			curColumn=curTable[column]
 			if curColumn['FK']=='' and curColumn['UNIQUE']:
 				auxVals[column]=genCanonicalValue(
+						table,
 						column,
 						curColumn['TYPE'], 
 						curColumn['MAXSIZE'],
