@@ -110,3 +110,4 @@ The program supports the following PostgreSQL data types:
 # IMPORTANT NOTES
 - Every table with SERIAL or BIGSERIAL column types must be brand-new (i.e. the autoincrementing counter must be currently on 1) in order to FOREIGN KEYS pointing to SERIAL/BIGSERIAL columns work,
 - For security, the default configuration of this script is to both start a TRANSACTION at the start of each output file and ROLLBACK at the end. Change this configuration inside the scriptConfig class (within bllshtMyDatabase.py file).
+- The script are mainly CASE SENSITIVE. Table names with mixed cases ARE NOT treated equally through the code.
