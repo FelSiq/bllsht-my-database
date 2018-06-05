@@ -28,7 +28,28 @@ fake=Faker(locale='pt_BR')
 	random text by default.
 """
 specialDataFuncs={
-	'nome': fake.name,
+	
+	"""
+		MODEL:
+
+		'columnName_1': {
+			'table_1': genFunctionA, 
+			'table_2': genFunctionB, 
+			'DEFAULT': genFunctionDefault}}
+
+		'columnName_2': genFunctionAllTables
+
+		...
+
+		'columnName_n': {
+			'table_c': genFunctionZ,
+			'table_d': genFunctionW
+			}
+		
+	"""
+
+	'nome': {'equipamento': fake.name, 'DEFAULT': fake.name},
+	'RG': fake.rg,
 	'nomeBanda': fake.name,
 	'endereco': fake.address,
 	'endereco': fake.address,
