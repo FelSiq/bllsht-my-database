@@ -401,6 +401,11 @@ def _randDATE():
 	d=str(d)
 	y=str(y)
 
+	# Do not check leap years for simplicity.
+	# (avoid 29 of february)
+	if m==2:
+		d%=29
+
 	# Make sure that the year is 'yyyy' (four digits)
 	# because it is based on a user-controlled config.
 	while len(y) < 4:
