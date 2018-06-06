@@ -399,14 +399,15 @@ def _randDATE():
 	d=random.randint(1, 31-(m%2+(m==2)))
 	y=random.randint(scriptConfig.MIN_YEAR, 
 		scriptConfig.MAX_YEAR+1)
-	m=str(m)
-	d=str(d)
-	y=str(y)
 
 	# Do not check leap years for simplicity.
 	# (avoid 29 of february)
 	if m==2:
 		d%=29
+
+	m=str(m)
+	d=str(d)
+	y=str(y)
 
 	# Make sure that the year is 'yyyy' (four digits)
 	# because it is based on a user-controlled config.
