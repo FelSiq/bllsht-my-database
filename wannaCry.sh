@@ -15,7 +15,7 @@ do
 	for j in `seq 1 $NUM_LOOPS`;
 	do	
 		echo "Progress: $i $j"		
-		`python3 bllshtMyDatabase.py schemas.sql > insert.sql` >> OUTPUT_FILENAME
+		`python3 bllshtMyDatabase.py schemas.sql $i > insert.sql` >> OUTPUT_FILENAME
 	done
 done
 
