@@ -66,7 +66,7 @@ class scriptConfig:
 	# Turn on this if you want a ROLLBACK ate the
 	# end of the transaction. This flag only has
 	# effect if BEGIN_TRANSACTION flag is True
-	ROLLBACK_AT_END=True
+	ROLLBACK_AT_END=False
 
 	# Should the values that haven't the 'NOT NULL'
 	# constraint receive NULL values?
@@ -393,7 +393,9 @@ def processConstraints(structuredTableCommands, sep=','):
 	Generate a random SQL DATE value.
 """
 def _randDATE():
-	m=random.randint(1, 12)
+	m=random.randint(1, 13)
+
+	# Don't generate day 31' for simplicity.
 	d=random.randint(1, 31-(m%2+(m==2)))
 	y=random.randint(scriptConfig.MIN_YEAR, 
 		scriptConfig.MAX_YEAR+1)
@@ -419,9 +421,9 @@ def _randDATE():
 	Generate a random SQL TIME value.
 """
 def _randTIME():
-	h=str(random.randint(0, 23))
-	m=str(random.randint(0, 59))
-	s=str(random.randint(0, 59))
+	h=str(random.randint(0, 24))
+	m=str(random.randint(0, 60))
+	s=str(random.randint(0, 60))
 	return ':'.join([
 		('0' if len(h)==1 else '')+h,
 		('0' if len(m)==1 else '')+m,
@@ -722,6 +724,10 @@ def printCommand(
 					curId=max(curGenValues[column])+1
 				curGenValues[column].append(curId)
 		return command
+
+	# Command blocked, remove generate values
+	for column in nonSerialColumn:
+		curGenValues[column].pop()
 	return None
 
 """
@@ -860,7 +866,12 @@ def genInsertCommands(dbStructure, dbFKHandler, numInst=5):
 				nonSerialColumn,
 				curInsertFKValues,
 				'')
-			print(command)
+
+			if command:
+				print(command)
+			else:
+				print('/* COMMAND BLOCKED',
+					'(CAN\'T SOLVE FK). */')
 
 		# If configured, the program will generate additional 
 		# instances each one with a NULL value for each possible 
