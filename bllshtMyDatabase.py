@@ -838,76 +838,77 @@ def genInsertCommands(dbStructure, dbFKHandler, numInst=5):
 	tableNumTotal=0
 	for table in dbStructure:
 		tableNumTotal+=1
-
-		# Auxiliary variable to help reducing verbosity
-		# inside this function.
-		curTable=dbStructure[table]
-
-		# Remove autoincrementable (SERIAL or BIGSERIAL)
-		# columns.
-		nonSerialColumn=removeSerial(list(curTable.keys()),
-			[curTable[column]['TYPE'] for column in curTable])
-
 		print('/* TABLE', table, '*/')
-		genValues[table]={}
-		for column in curTable.keys():
-			genValues[table][column]=[]
-
-		# Get the PRIMARY KEY values of the tables referenced 
-		# by the current table FOREIGN keys
-		errorFlag=True
-		while errorFlag:
+		tableErrorTries=75
+		while tableErrorTries > 0:
 			try:
+				tableCommands=[]
+
+				# Auxiliary variable to help reducing verbosity
+				# inside this function.
+				curTable=dbStructure[table]
+
+				# Remove autoincrementable (SERIAL or BIGSERIAL)
+				# columns.
+				nonSerialColumn=removeSerial(list(curTable.keys()),
+					[curTable[column]['TYPE'] for column in curTable])
+
+				genValues[table]={}
+				for column in curTable.keys():
+					genValues[table][column]=[]
+
+				# Get the PRIMARY KEY values of the tables referenced 
+				# by the current table FOREIGN keys
 				curInsertFKValues=getFKValues(table, 
 					dbFKHandler, genValues, curTable, instNum)
-				errorFlag=False
+
+				# Generate common instances (with non null values)
+				for i in range(numInst):
+					command=printCommand(
+						genValues, 
+						table, 
+						curTable, 
+						nonSerialColumn,
+						curInsertFKValues,
+						'')
+
+					if command:
+						tableCommands.append(command)
+					else:
+						tableCommands.append('/* COMMAND BLOCKED ' +\
+							'(CAN\'T SOLVE FK). */')
+
+				# If configured, the program will generate additional 
+				# instances each one with a NULL value for each possible 
+				# column that hasn't a 'NOT NULL' constraint and, obviously,
+				# is neither a PRIMARY KEY.
+				if scriptConfig.GEN_NULL_VALUES:
+					for i in range(len(nonSerialColumn)):
+						curNSColumn=nonSerialColumn[i]
+						if not curTable[curNSColumn]['NOTNULL']:
+							command=printCommand(
+								genValues, 
+								table, 
+								curTable, 
+								nonSerialColumn,
+								curInsertFKValues,
+								curNSColumn)
+							if command:
+								tableCommands.append('/* NULL INSERTION FOR ATTRIBUTE' +\
+									curNSColumn + 'AT TABLE' + table + ' */\n' + command)
+								
+				# Finally, print commands
+				while len(tableCommands):
+					print(tableCommands.pop())
+
+				# NEW LINE, to keep INSERT commands of each table
+				# nicely separated between each other.
+				print()
+
+				tableErrorTries=0
+				# Finished current table.
 			except:
-				continue
-
-		# Generate common instances (with non null values)
-		for i in range(numInst):
-			try:
-				command=printCommand(
-					genValues, 
-					table, 
-					curTable, 
-					nonSerialColumn,
-					curInsertFKValues,
-					'')
-
-				if command:
-					print(command)
-				else:
-					print('/* COMMAND BLOCKED',
-						'(CAN\'T SOLVE FK). */')
-			except:
-				print('/* ERROR PASSED AWAY */')
-
-		# If configured, the program will generate additional 
-		# instances each one with a NULL value for each possible 
-		# column that hasn't a 'NOT NULL' constraint and, obviously,
-		# is neither a PRIMARY KEY.
-		if scriptConfig.GEN_NULL_VALUES:
-			for i in range(len(nonSerialColumn)):
-				curNSColumn=nonSerialColumn[i]
-				if not curTable[curNSColumn]['NOTNULL']:
-					try:
-						command=printCommand(
-							genValues, 
-							table, 
-							curTable, 
-							nonSerialColumn,
-							curInsertFKValues,
-							curNSColumn)
-						if command:
-							print('/* NULL INSERTION FOR ATTRIBUTE', 
-								curNSColumn, 'AT TABLE', table, ' */\n', command)
-					except:
-						print('/* ERROR PASSED AWAY */')
-						
-		# NEW LINE, to keep INSERT commands of each table
-		# nicely separated between each other.
-		print()
+				tableErrorTries-=1
 
 	print('/* TABLE NUMBER TOTAL:', tableNumTotal, '*/')
 
