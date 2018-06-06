@@ -859,19 +859,22 @@ def genInsertCommands(dbStructure, dbFKHandler, numInst=5):
 
 		# Generate common instances (with non null values)
 		for i in range(numInst):
-			command=printCommand(
-				genValues, 
-				table, 
-				curTable, 
-				nonSerialColumn,
-				curInsertFKValues,
-				'')
+			try:
+				command=printCommand(
+					genValues, 
+					table, 
+					curTable, 
+					nonSerialColumn,
+					curInsertFKValues,
+					'')
 
-			if command:
-				print(command)
-			else:
-				print('/* COMMAND BLOCKED',
-					'(CAN\'T SOLVE FK). */')
+				if command:
+					print(command)
+				else:
+					print('/* COMMAND BLOCKED',
+						'(CAN\'T SOLVE FK). */')
+			except:
+				print('/* ERROR PASSED AWAY */')
 
 		# If configured, the program will generate additional 
 		# instances each one with a NULL value for each possible 
@@ -881,16 +884,19 @@ def genInsertCommands(dbStructure, dbFKHandler, numInst=5):
 			for i in range(len(nonSerialColumn)):
 				curNSColumn=nonSerialColumn[i]
 				if not curTable[curNSColumn]['NOTNULL']:
-					command=printCommand(
-						genValues, 
-						table, 
-						curTable, 
-						nonSerialColumn,
-						curInsertFKValues,
-						curNSColumn)
-					if command:
-						print('/* NULL INSERTION FOR ATTRIBUTE', 
-							curNSColumn, 'AT TABLE', table, ' */\n', command)
+					try:
+						command=printCommand(
+							genValues, 
+							table, 
+							curTable, 
+							nonSerialColumn,
+							curInsertFKValues,
+							curNSColumn)
+						if command:
+							print('/* NULL INSERTION FOR ATTRIBUTE', 
+								curNSColumn, 'AT TABLE', table, ' */\n', command)
+					except:
+						print('/* ERROR PASSED AWAY */')
 						
 		# NEW LINE, to keep INSERT commands of each table
 		# nicely separated between each other.
