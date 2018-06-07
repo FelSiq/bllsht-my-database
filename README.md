@@ -11,14 +11,14 @@ python bllshtMyDatabase.py <.sql with all CREATE TABLE> [Number of instances for
 # Configuration and customization
 You may easily change script parameters just changing values inside the ``scriptConfig'' class inside bllshtMyDatabase.py file.
 Supported script configuration parameters are:
-```
+```python
 class scriptConfig:
         BEGIN_TRANSACTION=True
         ROLLBACK_AT_END=True
         GEN_NULL_VALUES=True
         VARCHAR_DEFSIZE=10
         genRandomChars=False
-        A set of extreme values
+        # A set of extreme values
         MAX_REAL=1.0e+5-1
         MIN_REAL=-1.0e+5
         REAL_PRECISION=2
@@ -30,7 +30,7 @@ class scriptConfig:
         MAX_YEAR=2050
 ```
 # Sample Input file
-```
+```sql
 /* myDatabase.sql */
 
 CREATE TABLE person(
@@ -58,7 +58,7 @@ CREATE TABLE worker(
 ```
 
 # Output
-```
+```sql
 /* TOTAL OF 0 ERRORS WHILE BUILDING METADATA STRUCTURE. */
 BEGIN TRANSACTION;
 /* TABLE person */
