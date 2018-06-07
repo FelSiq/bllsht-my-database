@@ -2,6 +2,7 @@
 
 This is a Shell Script that executes a exhaustive test in a program.
 
+Usage:
 ```console
-Usage: ./wannaCry.sh BEGIN_NUM_INSERTS END_NUM_INSERTS NUM_LOOPS
+dev@Ubuntu-DevMachine: ~ $ ./wannaCry.sh BEGIN_NUM_INSERTS END_NUM_INSERTS NUM_LOOPS
 ```
