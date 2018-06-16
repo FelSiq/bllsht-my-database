@@ -17,21 +17,25 @@ You may easily change script parameters just changing values inside the ``script
 Supported script configuration parameters are:
 ```python
 class scriptConfig:
-        BEGIN_TRANSACTION=True
-        ROLLBACK_AT_END=True
-        GEN_NULL_VALUES=True
-        VARCHAR_DEFSIZE=10
-        genRandomChars=False
-        # A set of extreme values
-        MAX_REAL=1.0e+5-1
-        MIN_REAL=-1.0e+5
-        REAL_PRECISION=2
-        MAX_INT=2**(8*4)-1
-        MAX_INT=-2**(8*4)
-        MAX_BIGINT=2**(8*8)-1
-        MAX_BIGINT=-2**(8*8)
-        MIN_YEAR=1900
-        MAX_YEAR=2050
+	BEGIN_TRANSACTION=True
+	ROLLBACK_AT_END=False
+	GEN_NULL_VALUES=True
+	VARCHAR_DEFSIZE=10
+	GEN_RANDOM_CHARS=False
+	MAX_REAL=1.0e+5-1
+	MIN_REAL=-1.0e+5
+	PRECISION_REAL=2
+	MAX_MONEY=1.0e+5-1
+	MIN_MONEY=0
+	PRECISION_MONEY=2
+	MAX_SMALLINT=2**(8*2-1)-1
+	MIN_SMALLINT=-2**(8*2-1)
+	MAX_INT=900000
+	MIN_INT=100000
+	MAX_BIGINT=90000000
+	MIN_BIGINT=10000000
+	MIN_YEAR=2000
+	MAX_YEAR=2018
 ```
 # Sample Input file
 ```sql
@@ -105,7 +109,6 @@ The program supports the following PostgreSQL data types:
 - DATE
 - SERIAL
 - BIGSERIAL
-- TYPE
 - BOOLEAN
 - VARCHAR/VARCHAR2
 - CHAR/CHARACTER
