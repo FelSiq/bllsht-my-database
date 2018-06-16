@@ -1,8 +1,12 @@
 # How to use
-Just run bllshtMyDatabase.py, giving a .sql as first argument containing all the CREATE TABLE commands. You may also give a optional parameter, choosing how many instances of each table must be created.
+First things first, you must install python libraries dependencies. All libraries used are listed on "requirements.txt" file and can be given to pip3 as argument with the -r flag in order to install then all. After that, just run bllshtMyDatabase.py, giving a .sql as first argument containing all the CREATE TABLE commands. You may also give a optional parameter, choosing how many instances of each table must be created.
 ```
-python bllshtMyDatabase.py <.sql with all CREATE TABLE> [Number of instances for each table]
+pip3 install -r requirements.txt
+python3 bllshtMyDatabase.py <.sql with all CREATE TABLE> [Number of instances for each table]
 ```
+
+# Python version used
+This program was made and tested with Python version 3.5.2 and pip3 version 10.0.1.
 
 # BEFORE USING
 - Read the "[IMPORTANT NOTES](#important-notes)" section @ the end of this README.
@@ -97,13 +101,14 @@ The program supports the following PostgreSQL data types:
 - INTEGER
 - BIGINT
 - REAL
+- MONEY
 - DATE
 - SERIAL
 - BIGSERIAL
 - TYPE
 - BOOLEAN
-- VARCHAR
-- CHAR
+- VARCHAR/VARCHAR2
+- CHAR/CHARACTER
 - TIME
 - TIMESTAMP
 
@@ -112,3 +117,6 @@ The program supports the following PostgreSQL data types:
 - For security, the default configuration of this script is to both start a TRANSACTION at the start of each output file and ROLLBACK at the end. Change this configuration inside the scriptConfig class (within bllshtMyDatabase.py file).
 - The script are mainly CASE SENSITIVE. Table names with mixed cases ARE NOT treated equally through the code.
 - The script DO NOT support 'NOT' PostgreSQL keyword.
+
+# Known bugs
+Check out opened issues in this github repository.
