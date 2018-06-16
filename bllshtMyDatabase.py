@@ -79,20 +79,23 @@ class scriptConfig:
 	# Should columns with types CHAR and VARCHAR
 	# without custom data generator function be
 	# filled only with random lower case characters?
-	genRandomChars=False
+	GEN_RANDOM_CHARS=False
 
 	# A set of extreme values
-	# MAX_INT=2**(8*4)-1
-	# MAX_INT=-2**(8*4)
-	# MAX_BIGINT=2**(8*8)-1
-	# MAX_BIGINT=-2**(8*8)
+	# MAX_INT=2**(8*4-1)-1
+	# MAX_INT=-2**(8*4-1)
+	# MAX_BIGINT=2**(8*8-1)-1
+	# MAX_BIGINT=-2**(8*8-1)
 	# MIN_YEAR=1900
 	# MAX_YEAR=2050
 	MAX_REAL=1.0e+5-1
 	MIN_REAL=-1.0e+5
-	REAL_PRECISION=2
-	MAX_SMALLINT=2**(8*2)-1
-	MIN_SMALLINT=-2**(8*2)
+	PRECISION_REAL=2
+	MAX_MONEY=1.0e+5-1
+	MIN_MONEY=0
+	PRECISION_MONEY=2
+	MAX_SMALLINT=2**(8*2-1)-1
+	MIN_SMALLINT=-2**(8*2-1)
 	MAX_INT=900000
 	MIN_INT=100000
 	MAX_BIGINT=90000000
@@ -107,12 +110,12 @@ class scriptConfig:
 	-	Substitutes all blank spaces sequences 
 		for a single blank space. 
 
-	-	Remove all source /* commentaries */
+	-	Remove all source /* commentaries1 */ and -- commentaries2
 """
 def readData(db):
 	with open(db) as f:
 		return regex.sub(r'\s+', ' ', 
-			regex.sub(r'/\*[^*]*\*/', '', f.read()))
+			regex.sub(r'/\*[^*]*\*/|--[^\n]*\n', '', f.read()))
 
 """
 	This is a pseudo-regular expression implementation
@@ -192,7 +195,7 @@ def processConstraints(structuredTableCommands, sep=','):
 		regex.IGNORECASE)
 	reConstraintFK=regex.compile(
 		r'FOREIGN\s+KEY\s*\(([^)]+)\)'+
-		r'\s*REFERENCES\s*([^\s]+)', regex.IGNORECASE)
+		r'\s*REFERENCES\s*([^\s\(]+)', regex.IGNORECASE)
 	reConstraintPK=regex.compile(
 		r'PRIMARY\s+KEY\s*\(([^)]+)\)', regex.IGNORECASE)
 	reConstraintUn=regex.compile(
@@ -202,7 +205,7 @@ def processConstraints(structuredTableCommands, sep=','):
 		r'\s*IN\s*\(([^)]+)\)\s*\)', regex.IGNORECASE)
 	reConstraintRE=regex.compile(
 		r'\CHECK\s*\(\s*([^\s]+)'+
-		r"\s*~\s*'([^']+)'\s*\)", regex.IGNORECASE)
+		r"\s*(?:~|SIMILAR\s*TO)\s*'([^']+)'\s*\)", regex.IGNORECASE)
 	reConstraintNN=regex.compile(
 		r'([^\s]+).*NOT\s*NULL\s*', regex.IGNORECASE)
 	reConstraintDF=regex.compile(
@@ -351,7 +354,7 @@ def processConstraints(structuredTableCommands, sep=','):
 					if attrName in curTable:
 						# In case that the column is declared
 						# twice in the same table
-						curErrorTable.append(('COLUMN DECLARED TWITCE', 
+						curErrorTable.append(('COLUMN DECLARED TWICE', 
 							currentCommand))
 						errorCounter+=1
 					else:
@@ -451,21 +454,8 @@ def genValue(
 	permittedValues,
 	regexPat=''):
 
-	"""
-	POSTGRESQL DATATYPES:
-	
-	INTEGER: 4B
-	BIGINT: 8B
-	DATE: 'YYYY-MI-DD'
-	SERIAL: 4B (autoincrementable)
-	BIGSERIAL: 8B (autoincrementable) 
-	TYPE[N] (VECTOR) 
-	BOOLEAN: TRUE/FALSE
-	VARCHAR 
-	CHAR 
-	TIME: 'HH24:MI:SS'
-	TIMESTAMP: 'YYYY-MM-DD HH24:MI:SS'
-	"""
+	# Regex used to find CHARACTER-type attributes
+	reCheckChar=regex.compile(r'CHAR(ACTER)?|VARCHAR2?')
 
 	# Regex used to find for array-type attributes
 	reCheckArray=regex.compile(r'(\w+)\s*\[(\d+)\](.*)')
@@ -535,7 +525,14 @@ def genValue(
 		val=random.random()
 		val*=(scriptConfig.MAX_REAL-scriptConfig.MIN_REAL)
 		val+=scriptConfig.MIN_REAL
-		val=round(val, scriptConfig.REAL_PRECISION)
+		val=round(val, scriptConfig.PRECISION_REAL)
+		return str(val)
+
+	elif canonicalVT == 'MONEY':
+		val=random.random()
+		val*=(scriptConfig.MAX_MONEY-scriptConfig.MIN_MONEY)
+		val+=scriptConfig.MIN_MONEY
+		val=round(val, scriptConfig.PRECISION_MONEY)
 		return str(val)
 
 	elif canonicalVT == 'INTEGER':
@@ -553,13 +550,13 @@ def genValue(
 	elif canonicalVT == 'BOOLEAN':
 		return random.choice(['TRUE', 'FALSE'])
 
-	elif canonicalVT == 'VARCHAR' or canonicalVT == 'CHAR':
+	elif reCheckChar.search(canonicalVT):
 		
 		size=valMaxSize 
-		if canonicalVT == 'VARCHAR':
+		if canonicalVT == 'VARCHAR' or canonicalVT == 'VARCHAR2':
 			size=random.randint(valMaxSize//2, valMaxSize+1) \
 				if valMaxSize != -1 else scriptConfig.VARCHAR_DEFSIZE
-		if scriptConfig.genRandomChars:
+		if scriptConfig.GEN_RANDOM_CHARS:
 			# In case the script was configured to generate
 			# random lower case characters on a column with
 			# type CHAR or VARCHAR w/o a custom data generator
@@ -895,8 +892,8 @@ def genInsertCommands(dbStructure, dbFKHandler, numInst=5):
 								curInsertFKValues,
 								curNSColumn)
 							if command:
-								tableCommands.append('/* NULL INSERTION FOR ATTRIBUTE' +\
-									curNSColumn + 'AT TABLE' + table + ' */\n' + command)
+								tableCommands.append('/* NULL INSERTION FOR ATTRIBUTE ' +\
+									curNSColumn + 'AT TABLE ' + table + ' */\n' + command)
 								
 				# Finally, print commands
 				while len(tableCommands):
