@@ -66,7 +66,7 @@ class scriptConfig:
 	# Turn on this if you want a ROLLBACK ate the
 	# end of the transaction. This flag only has
 	# effect if BEGIN_TRANSACTION flag is True
-	ROLLBACK_AT_END=False
+	ROLLBACK_AT_END=True
 
 	# Should the values that haven't the 'NOT NULL'
 	# constraint receive NULL values?
@@ -74,7 +74,7 @@ class scriptConfig:
 
 	# Default size of a VARCHAR with non explicity
 	# defined size.
-	VARCHAR_DEFSIZE=10
+	VARCHAR_DEFSIZE=15
 	
 	# Should columns with types CHAR and VARCHAR
 	# without custom data generator function be
@@ -893,7 +893,7 @@ def genInsertCommands(dbStructure, dbFKHandler, numInst=5):
 								curNSColumn)
 							if command:
 								tableCommands.append('/* NULL INSERTION FOR ATTRIBUTE ' +\
-									curNSColumn + 'AT TABLE ' + table + ' */\n' + command)
+									curNSColumn + ' AT TABLE ' + table + ' */\n' + command)
 								
 				# Finally, print commands
 				while len(tableCommands):
