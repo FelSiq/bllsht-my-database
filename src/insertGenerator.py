@@ -3,6 +3,7 @@ import numpy.random as random
 from .valueGenerator import valueGenerator
 from .bllshtUtils import bllshtUtils
 from .configme import *
+import sys
 
 class insertGenerator:
 	def __init__(self):
@@ -305,7 +306,8 @@ class insertGenerator:
 
 					tableErrorTries=0
 					# Finished current table.
-				except:
+				except Exception as e:
+					print(sys.exc_info().tb_lineno)
 					tableErrorTries-=1
 
 		print('/* TABLE NUMBER TOTAL:', tableNumTotal, '*/')

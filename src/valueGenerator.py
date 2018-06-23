@@ -1,21 +1,52 @@
 import numpy.random as random
+from numpy import inf
 from .configme import *
 from .bllshtUtils import bllshtUtils
 from faker import Faker
 import regex
 import rstr
+import collections
 
 class valueGenerator:
 	"""
 	Generate a random SQL DATE value.
 	"""
-	def _randDATE(self):
-		m=random.randint(1, 13)
-
+	def _randDATE(self, maxDate=None, minDate=None):
+		"""
+			maxDate = (year, month, day)
+			minDate = (year, month, day)
+		"""
 		# Don't generate day 31' for simplicity.
-		d=random.randint(1, 31-(m%2+(m==2)))
-		y=random.randint(scriptConfig.MIN_YEAR, 
-			scriptConfig.MAX_YEAR+1)
+		# Natural limit values
+		maxDay=30
+		minDay=1
+		maxMonth=12
+		minMonth=1
+		maxYear=scriptConfig.MAX_YEAR
+		minYear=scriptConfig.MIN_YEAR
+
+		# Extern limit values
+		if isinstance(maxDate, collections.Iterable):
+			try:
+				maxYear, maxMonth, maxDay = maxDate	
+				maxYear=min(maxYear, scriptConfig.MAX_YEAR)
+				maxMonth=min(maxMonth, 12)
+				maxDay=min(maxDay, 30)
+			except:
+				pass
+
+		if isinstance(minDate, collections.Iterable):
+			try:
+				minYear, minMonth, minDay = minDate	
+				minYear=max(minYear, scriptConfig.MIN_YEAR)
+				minMonth=max(minMonth, 1)
+				minDay=max(minDay, 1)
+			except:
+				pass
+
+		m=random.randint(minMonth, maxMonth+1)
+		d=random.randint(minDay, maxDay-(m%2+(m==2))+1)
+		y=random.randint(minYear, maxYear+1)
 
 		# Do not check leap years for simplicity.
 		# (avoid 29 of february)
@@ -38,10 +69,41 @@ class valueGenerator:
 	"""
 		Generate a random SQL TIME value.
 	"""
-	def _randTIME(self):
-		h=str(random.randint(0, 24))
-		m=str(random.randint(0, 60))
-		s=str(random.randint(0, 60))
+	def _randTIME(self, maxTime=None, minTime=None):
+		"""
+			maxTime = (hour, minutes, seconds)
+			minTime = (hour, minutes, seconds)
+		"""
+		# Natural limit values
+		maxHour=23
+		minHour=0
+		maxMin=59
+		minMin=0
+		maxSec=59
+		minSec=0
+
+		# Extern limit values
+		if isinstance(maxTime, collections.Iterable):
+			try:
+				maxHour, maxMin, maxSec = maxTime
+				maxHour=min(maxHour, 23)
+				maxMin=min(maxMin, 59)
+				maxSec=min(maxSec, 59)
+			except:
+				pass
+
+		if isinstance(minTime, collections.Iterable):
+			try:
+				minHour, minMin, minSec = minTime
+				minHour=max(minHour, 0)
+				minMin=max(minMin, 0)
+				minSec=max(minSec, 0)
+			except:
+				pass
+
+		h=str(random.randint(minHour, maxHour+1))
+		m=str(random.randint(minMin, maxMin+1))
+		s=str(random.randint(minSec, maxSec+1))
 		return ':'.join([
 			('0' if len(h)==1 else '')+h,
 			('0' if len(m)==1 else '')+m,
@@ -60,7 +122,9 @@ class valueGenerator:
 		valType, 
 		valMaxSize, 
 		permittedValues,
-		regexPat=''):
+		regexPat='',
+		minValue=-inf,
+		maxValue=+inf):
 
 		# Regex used to find CHARACTER-type attributes
 		reCheckChar=regex.compile(r'CHAR(ACTER)?|VARCHAR2?|TEXT')
@@ -86,7 +150,9 @@ class valueGenerator:
 					valType+additionalDims, 
 					valMaxSize, 
 					permittedValues, 
-					regexPat))
+					regexPat,
+					minValue,
+					maxValue))
 
 			return '{' + ', '.join(partialRes) + '}'
 
@@ -147,35 +213,41 @@ class valueGenerator:
 			return bllshtUtils.quotes(data)
 
 		elif canonicalVT in ('SMALLINT', 'INT2'):
-			return str(random.randint(scriptConfig.MIN_SMALLINT, 
-				scriptConfig.MAX_SMALLINT+1))
+			return str(random.randint(
+				max(scriptConfig.MIN_SMALLINT, minValue), 
+				min(scriptConfig.MAX_SMALLINT, maxValue)+1))
 
 		elif canonicalVT in ('REAL', 'FLOAT8'):
 			val=random.random()
-			val*=(scriptConfig.MAX_REAL-scriptConfig.MIN_REAL)
-			val+=scriptConfig.MIN_REAL
+			val*=(min(scriptConfig.MAX_REAL, maxValue)-\
+				max(scriptConfig.MIN_REAL, minValue))
+			val+=max(minValue, scriptConfig.MIN_REAL)
 			val=round(val, scriptConfig.PRECISION_REAL)
 			return str(val)
 
 		elif canonicalVT in ('INTEGER', 'INT', 'INT4'):
-			return str(random.randint(scriptConfig.MIN_INT, 
-				scriptConfig.MAX_INT+1))
+			return str(random.randint(
+				max(minValue, scriptConfig.MIN_INT), 
+				min(maxValue, scriptConfig.MAX_INT)+1))
 
 		elif canonicalVT in ('BIGINT', 'INT8'):
-			return str(random.randint(scriptConfig.MIN_BIGINT, 
-				scriptConfig.MAX_BIGINT+1))
+			return str(random.randint(
+				max(minValue, scriptConfig.MIN_BIGINT), 
+				min(maxValue, scriptConfig.MAX_BIGINT)+1))
 
 		elif canonicalVT == 'DATE':
-			return 'to_date (' + bllshtUtils.quotes(self._randDATE()) +\
-				', '+ bllshtUtils.quotes('YYYY-MM-DD') + ')'
+			return 'to_date (' +\
+				bllshtUtils.quotes(self._randDATE(maxValue, minValue)) +\
+				', ' + bllshtUtils.quotes('YYYY-MM-DD') + ')'
 
 		elif canonicalVT in ('BOOLEAN', 'BOOL'):
 			return random.choice(['TRUE', 'FALSE'])
 
 		elif canonicalVT == 'MONEY':
 			val=random.random()
-			val*=(scriptConfig.MAX_MONEY-scriptConfig.MIN_MONEY)
-			val+=scriptConfig.MIN_MONEY
+			val*=(min(maxValue, scriptConfig.MAX_MONEY)-\
+				max(minValue, scriptConfig.MIN_MONEY))
+			val+=max(minValue, scriptConfig.MIN_MONEY)
 			val=round(val, scriptConfig.PRECISION_MONEY)
 			return str(val)
 
@@ -190,11 +262,19 @@ class valueGenerator:
 			return 'B' + bllshtUtils.quotes(bitSeq)
 
 		elif canonicalVT == 'TIME':
-			return bllshtUtils.quotes(self._randTIME())
+			return bllshtUtils.quotes(self._randTIME(maxValue, minValue))
 
 		elif canonicalVT == 'TIMESTAMP':
-			return 'to_timestamp (' + bllshtUtils.quotes( self._randDATE() +\
-				' ' + self._randTIME()) + ', ' +\
+			# Unpack
+			maxDate, maxTime = maxValue if \
+				isinstance(maxValue, collections.Iterable) else (None, None)
+			minDate, minTime = minValue if \
+				isinstance(minValue, collections.Iterable) else (None, None)
+
+			return 'to_timestamp (' +\
+				bllshtUtils.quotes( \
+				self._randDATE(maxDate, minDate) +\
+				' ' + self._randTIME(maxTime, minTime)) + ', ' +\
 				bllshtUtils.quotes('YYYY-MM-DD HH24:MI:SS') +')'
 
 		elif canonicalVT == 'INET':
@@ -205,13 +285,71 @@ class valueGenerator:
 	
 	"""
 		Function dedicated to evaluate CHECK constraints
-		based on comparison (>, <, =, !=, <>, <=, >=) and 
-		logical (AND, OR, NOT) operations.
+		based on comparison (>, <, =, !=, <>, <=, >=).
 
-		To be implemented.
+		This is a very naive solution, but should
+		work.
 	"""
-	def check(self, value, expressions):
-		return True
+	def checkConstraintsVals(self, expressions):
+		"""
+		Assuming "expressions" is in the form
+		expressions = [
+			(operator_0, value_0),
+			(operator_1, value_1),
+			...,
+			(operator_n, value_n)
+		]
+
+		Currently supporting this time of verification only
+		with the following data types:
+		- INTEGERS (of any type)
+		- REAL VALUES (of any time)
+		- DATE, TIME and TIMESTAMPS
+		"""
+		minValidVal=None
+		maxValidVal=None
+		forbiddenVals=set()
+		possible=True
+		for e in expressions:
+			op, compValue = e[0]
+			
+			if op == '=':
+				if minValidVal is not None:
+					minValidVal = compValue
+				else:
+					possible &= minValidVal == compValue
+
+				if maxValidVal is not None:
+					maxValidVal = compValue
+				else:
+					possible &= minValidVal == compValue
+
+			elif op == '<>' or op == '!=':
+				forbiddenVals.union({compValue})
+				if maxValidVal is not None and maxValidVal == minValidVal:
+					possible &= (maxValidVal != compValue)
+
+			elif op == '>=':
+				minValidVal = compValue
+
+			elif op == '>':
+				minValidVal = compValue + 1
+
+			elif op == '<=':
+				maxValidVal = compValue
+
+			elif op == '<':
+				maxValidVal = compValue - 1
+
+			if not possible:
+				break 
+
+		if minValidVal is None:
+			minValidVal = -inf
+		if maxValidVal is None:
+			maxValidVal = +inf
+
+		return minValidVal, maxValidVal, forbiddenVals, possible
 
 	"""
 
@@ -229,13 +367,22 @@ class valueGenerator:
 
 		validValue=False
 		while not validValue:
+			minC, maxC, forbC, possible=self.checkConstraintsVals(compLogicalExp)
+
+			# Check if given comparison constraints are
+			# fair enough to gen a valid value
+			if not possible:
+				return None	
+
 			value=str(self.genValue(
 				tableName,
 				column,
 				varType, 
 				maxSize,
 				permittedVals,
-				regex
+				regex,
+				minC,
+				maxC
 				))
 
 			# POSTGRESQL want single quotes around the
@@ -250,11 +397,6 @@ class valueGenerator:
 
 			# Check if the generated value is not in the
 			# set of forbidden values (CHECK NOT IN constraints)
-			validValue = value not in forbiddenVals
-			
-			# Check if generated value respects all
-			# CHECK constraints based on comparison and
-			# logic operations
-			validValue &= self.check(value, compLogicalExp)
+			validValue = value not in set.union(forbiddenVals, forbC)
 
 		return value
