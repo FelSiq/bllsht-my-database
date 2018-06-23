@@ -13,9 +13,11 @@ This program was made and tested with Python version 3.5.2 and pip3 version 10.0
 - Verify the "[SUPPORTED DATA TYPES](#supported-data-types)" section @ the middle of this README.
 
 # Configuration and customization
-You may easily change script parameters just changing values inside the ``scriptConfig'' class inside bllshtMyDatabase.py file.
+You may easily configure script parameters just changing values inside the src/configme.py. There you will find classes named ``fakeDataHandler'' and ``scriptConfig'', which keeps all configurable parameters of bllshtMyDatabase.py supported by script.
+
 Supported script configuration parameters are:
 ```python
+# Inside src/configme.py
 class scriptConfig:
 	BEGIN_TRANSACTION=True
 	ROLLBACK_AT_END=False
@@ -36,8 +38,30 @@ class scriptConfig:
 	MIN_BIGINT=10000000
 	MIN_YEAR=2000
 	MAX_YEAR=2018
+
+class fakeDataHandler:
+	# Check "faker" module documentation @ https://github.com/joke2k/faker
+	fake=Faker(locale='your_locale_here')
+
+	# Configure right here your data generation custom functions
+	specialDataFuncs={
+		'generic_column_name1': function_that_generate_values,
+		'generic_column_name2': {
+			'table_1_that_contains_that_column': gen_func, 
+			'another_table_with_that_column': different_function
+			'DEFAULT': function_that_gens_for_any_other_table_with_that_column},
+		'nome': {'equipamento': fake.name, 'DEFAULT': fake.name},
+		'RG': fake.ssn,
+		'nomeBanda': fake.name,
+		'endereco': fake.address,
+		'endereco': fake.address,
+		'descricao': fake.text,
+		'telefone': fake.phone_number,
+	}
 ```
+
 # Sample Input file
+Here's a very simple exaple of which a generic input file should contains in order to script work with, alongside it's correspondent output. You can verify it's exactly input/output pair inside ``examples'' directory.
 ```sql
 /* myDatabase.sql */
 
