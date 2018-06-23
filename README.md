@@ -13,7 +13,7 @@ This program was made and tested with Python version 3.5.2 and pip3 version 10.0
 - Verify the "[SUPPORTED DATA TYPES](#supported-data-types)" section @ the middle of this README.
 
 # Configuration and customization
-You may easily configure script parameters just changing values inside the src/configme.py. There you will find classes named ``fakeDataHandler'' and ``scriptConfig'', which keeps all configurable parameters of bllshtMyDatabase.py supported by script.
+You may easily configure script parameters just changing values inside the src/configme.py. There you will find classes named "fakeDataHandler" and "scriptConfig", which keeps all configurable parameters of bllshtMyDatabase.py supported by script.
 
 Supported script configuration parameters are:
 ```python
@@ -130,12 +130,11 @@ The program supports the following PostgreSQL data types:
 - BIGINT
 - REAL
 - MONEY
-- DATE
-- SERIAL
-- BIGSERIAL
+- SMALLSERIAL/SERIAL/BIGSERIAL
 - BOOLEAN
 - VARCHAR/VARCHAR2
 - CHAR/CHARACTER
+- DATE
 - TIME
 - TIMESTAMP
 
