@@ -63,7 +63,7 @@ class valueGenerator:
 		regexPat=''):
 
 		# Regex used to find CHARACTER-type attributes
-		reCheckChar=regex.compile(r'CHAR(ACTER)?|VARCHAR2?')
+		reCheckChar=regex.compile(r'CHAR(ACTER)?|VARCHAR2?|TEXT')
 
 		# Regex used to find for array-type attributes
 		reCheckArray=regex.compile(r'(\w+)\s*\[(\d+)\](.*)')
@@ -121,47 +121,15 @@ class valueGenerator:
 		# this set
 		elif permittedValues is not None and len(permittedValues) > 0:
 			smpVal=random.choice(list(permittedValues))
-			if canonicalVT == 'INTEGER' or canonicalVT == 'BIGINT':
+			if canonicalVT in ('MONEY', 'REAL', 'FLOAT8', 'INT', 'INT2', \
+				'INT4', 'INT8', 'SMALLINT', 'INTEGER', 'BIGINT'):
 				return smpVal
-			return bllshtUtils.quotes(smpVal)
-
-		elif canonicalVT == 'SMALLINT':
-			return str(random.randint(scriptConfig.MIN_SMALLINT, 
-				scriptConfig.MAX_SMALLINT+1))
-
-		elif canonicalVT == 'REAL':
-			val=random.random()
-			val*=(scriptConfig.MAX_REAL-scriptConfig.MIN_REAL)
-			val+=scriptConfig.MIN_REAL
-			val=round(val, scriptConfig.PRECISION_REAL)
-			return str(val)
-
-		elif canonicalVT == 'MONEY':
-			val=random.random()
-			val*=(scriptConfig.MAX_MONEY-scriptConfig.MIN_MONEY)
-			val+=scriptConfig.MIN_MONEY
-			val=round(val, scriptConfig.PRECISION_MONEY)
-			return str(val)
-
-		elif canonicalVT == 'INTEGER':
-			return str(random.randint(scriptConfig.MIN_INT, 
-				scriptConfig.MAX_INT+1))
-
-		elif canonicalVT == 'BIGINT':
-			return str(random.randint(scriptConfig.MIN_BIGINT, 
-				scriptConfig.MAX_BIGINT+1))
-
-		elif canonicalVT == 'DATE':
-			return 'to_date (' + bllshtUtils.quotes(self._randDATE()) +\
-				', '+ bllshtUtils.quotes('YYYY-MM-DD') + ')'
-
-		elif canonicalVT == 'BOOLEAN':
-			return random.choice(['TRUE', 'FALSE'])
+			return ('B' if canonicalVT in ('BIT', 'VARBIT') else '') + bllshtUtils.quotes(smpVal)
 
 		elif reCheckChar.search(canonicalVT):
 			
 			size=valMaxSize 
-			if canonicalVT == 'VARCHAR' or canonicalVT == 'VARCHAR2':
+			if canonicalVT in ('VARCHAR', 'VARCHAR2', 'TEXT'):
 				size=random.randint(valMaxSize//2, valMaxSize+1) \
 					if valMaxSize != -1 else scriptConfig.VARCHAR_DEFSIZE
 			if scriptConfig.GEN_RANDOM_CHARS:
@@ -178,6 +146,49 @@ class valueGenerator:
 
 			return bllshtUtils.quotes(data)
 
+		elif canonicalVT in ('SMALLINT', 'INT2'):
+			return str(random.randint(scriptConfig.MIN_SMALLINT, 
+				scriptConfig.MAX_SMALLINT+1))
+
+		elif canonicalVT in ('REAL', 'FLOAT8'):
+			val=random.random()
+			val*=(scriptConfig.MAX_REAL-scriptConfig.MIN_REAL)
+			val+=scriptConfig.MIN_REAL
+			val=round(val, scriptConfig.PRECISION_REAL)
+			return str(val)
+
+		elif canonicalVT in ('INTEGER', 'INT', 'INT4'):
+			return str(random.randint(scriptConfig.MIN_INT, 
+				scriptConfig.MAX_INT+1))
+
+		elif canonicalVT in ('BIGINT', 'INT8'):
+			return str(random.randint(scriptConfig.MIN_BIGINT, 
+				scriptConfig.MAX_BIGINT+1))
+
+		elif canonicalVT == 'DATE':
+			return 'to_date (' + bllshtUtils.quotes(self._randDATE()) +\
+				', '+ bllshtUtils.quotes('YYYY-MM-DD') + ')'
+
+		elif canonicalVT in ('BOOLEAN', 'BOOL'):
+			return random.choice(['TRUE', 'FALSE'])
+
+		elif canonicalVT == 'MONEY':
+			val=random.random()
+			val*=(scriptConfig.MAX_MONEY-scriptConfig.MIN_MONEY)
+			val+=scriptConfig.MIN_MONEY
+			val=round(val, scriptConfig.PRECISION_MONEY)
+			return str(val)
+
+		elif canonicalVT in ('BIT', 'VARBIT'):
+			bitSeq=''
+			size=valMaxSize
+			if canonicalVT == 'VARBIT':
+				size=random.randint(valMaxSize//2, valMaxSize+1) \
+					if valMaxSize != -1 else scriptConfig.VARCHAR_DEFSIZE
+			for i in range(size):
+				bitSeq += str(random.randint(2))
+			return 'B' + bllshtUtils.quotes(bitSeq)
+
 		elif canonicalVT == 'TIME':
 			return bllshtUtils.quotes(self._randTIME())
 
@@ -185,6 +196,10 @@ class valueGenerator:
 			return 'to_timestamp (' + bllshtUtils.quotes( self._randDATE() +\
 				' ' + self._randTIME()) + ', ' +\
 				bllshtUtils.quotes('YYYY-MM-DD HH24:MI:SS') +')'
+
+		elif canonicalVT == 'INET':
+			ipAddress=fake.ipv6() if scriptConfig.INET_DATATYPE_IPV6 else fake.ipv4()
+			return bllshtUtils.quotes(ipAddress)
 
 		return None
 

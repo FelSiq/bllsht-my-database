@@ -4,18 +4,21 @@ import regex
 class preprocessor:
 	"""
 		Read all data from the .sql source file, 
-		preprocessing the data.
-
-		-	Substitutes all blank spaces sequences 
-			for a single blank space. 
-
-		-	Remove all source /* commentaries1 */ and -- commentaries2
+		cleaning the data.
 	"""
 	def readData(self, db):
 		data = None
 		with open(db) as f:
-			data= regex.sub(r'\s+', ' ', 
-				regex.sub(r'/\*[^*]*\*/|--[^\n]*\n', '', f.read()))
+			# Substitute all blank spaces sequences for a single blank space. 
+			data=regex.sub(r'/\*[^*]*\*/|--[^\n]*\n', '', f.read())
+
+			# Remove all source /* commentaries1 */ and -- commentaries2
+			data=regex.sub(r'\s+', ' ', data)
+
+			# Change all composite data type names to a atomic alias
+			data=regex.sub(r'character\s*varying', 'VARCHAR', data, flags=regex.IGNORECASE)
+			data=regex.sub(r'bit\s*varying', 'VARBIT', data, flags=regex.IGNORECASE)
+			data=regex.sub(r'double\s*precision', 'FLOAT8', data, flags=regex.IGNORECASE)
 
 		# Regular expression that get a TABLE from the source file.
 		reGetTable=regex.compile(

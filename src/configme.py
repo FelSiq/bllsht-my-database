@@ -52,6 +52,11 @@ class scriptConfig:
 	# give up?
 	TABLE_ERROR_TRIES=128	
 
+	# Should INET data type be filled with IPV6
+	# addresses? (otherwise it will be filled
+	# with IPV4 addresses).
+	INET_DATATYPE_IPV6=True
+
 class fakeDataHandler:
 	"""
 		Powerful python library to generate fake data

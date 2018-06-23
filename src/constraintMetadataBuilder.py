@@ -13,6 +13,7 @@ class constraintMetadataBuilder:
 			'TYPE': attrType, 
 			'MAXSIZE': maxSize, 
 			'PERMITTEDVALUES': set(),
+			'FORBIDDENVALUES': set(),
 			'PK': False, 
 			'UNIQUE': 0, 
 			'DEFVAL': '', 
@@ -55,6 +56,9 @@ class constraintMetadataBuilder:
 		reConstraintCI=regex.compile(
 			r'\CHECK\s*\([^(]*\(([^)]+)\)'+
 			r'\s*IN\s*\(([^)]+)\)\s*\)', regex.IGNORECASE)
+		reConstraintCNI=regex.compile(
+			r'\CHECK\s*\([^(]*\(([^)]+)\)'+
+			r'\s*NOT\s*IN\s*\(([^)]+)\)\s*\)', regex.IGNORECASE)
 		reConstraintRE=regex.compile(
 			r'\CHECK\s*\(\s*([^\s]+)'+
 			r"\s*(?:~|SIMILAR\s*TO)\s*'([^']+)'\s*\)", regex.IGNORECASE)

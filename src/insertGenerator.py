@@ -8,7 +8,10 @@ class insertGenerator:
 	def __init__(self):
 		self.generator=valueGenerator()
 	"""
-		Remove all SMALLSERIAL/SERIAL/BIGSERIAL column types,
+		Remove all 
+		- SMALLSERIAL/SERIAL2
+		- SERIAL/SERIAL4
+		- BIGSERIAL/SERIAL8 column types,
 		because they're not needed to build up a
 		valid INSERT command.
 	"""
@@ -16,7 +19,7 @@ class insertGenerator:
 		rmIndexes=[]
 
 		for i in range(len(keys)):
-			if types[i].find('SERIAL') != -1:
+			if types[i].upper().find('SERIAL') != -1:
 				rmIndexes.append(i)
 
 		for i in sorted(rmIndexes, reverse=True):
