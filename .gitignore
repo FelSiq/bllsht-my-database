@@ -1,3 +1,4 @@
 *.swp
 errors.txt
 debug/dump
+__pycache__
