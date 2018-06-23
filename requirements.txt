@@ -1,3 +1,4 @@
 regex
 rstr
 faker
+numpy
