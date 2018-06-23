@@ -99,6 +99,9 @@ class insertGenerator:
 					validValue = (not curColumn['UNIQUE']) \
 						or (value not in curGenValues[column])
 
+					# Check if generated value is not in the forbidden values sets
+					validValue &= value not in curColumn['FORBIDDENVALUES']
+
 					# 'None' will be used as a bugged 'valid' type,
 					# because is probably caused by:
 					# -	Bad SQL input code

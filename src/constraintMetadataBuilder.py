@@ -137,6 +137,19 @@ class constraintMetadataBuilder:
 								'COLUMN NOT EXISTS', currentCommand))
 							errorCounter+=1
 
+					# Check CHECK NOT IN
+					matchCheckNotIn=reConstraintCNI.search(currentCommand)
+					if matchCheckNotIn:
+						refColumn=matchCheckNotIn.groups()[0]
+						if refColumn in curTable:
+							curTable[refColumn]['FORBIDDENVALUES']=set(
+								(regex.sub('\s+|\'', '', 
+								matchCheckNotIn.groups()[1])).split(sep))
+						else:
+							curErrorTable.append(('CHECK NOT IN:', 
+								'COLUMN NOT EXISTS', currentCommand))
+							errorCounter+=1
+
 					# Check PRIMARY KEY
 					matchPK=reConstraintPK.search(currentCommand)
 					if matchPK:
