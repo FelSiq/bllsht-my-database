@@ -71,13 +71,6 @@ class insertGenerator:
 					blockCommand=True
 
 			elif column != genNullAt:
-				# From now, it is important to use the previous
-				# created values in order to keep UNIQUE values,
-				# unique. For now, each UNIQUE value is treated
-				# separatelly, which means that a composite key
-				# with n attributes is viewed a set of different
-				# keys up to n. This makes codification simplier
-				# and should not be a big problem for now.
 
 				validValue=False
 				while not validValue:
@@ -88,6 +81,8 @@ class insertGenerator:
 						curColumn['TYPE'], 
 						curColumn['MAXSIZE'],
 						curColumn['PERMITTEDVALUES'],
+						curColumn['FORBIDDENVALUES'],
+						curColumn['COMPLOGICAL'],
 						curColumn['REGEX']
 						)
 
@@ -98,9 +93,6 @@ class insertGenerator:
 
 					validValue = (not curColumn['UNIQUE']) \
 						or (value not in curGenValues[column])
-
-					# Check if generated value is not in the forbidden values sets
-					validValue &= value not in curColumn['FORBIDDENVALUES']
 
 					# 'None' will be used as a bugged 'valid' type,
 					# because is probably caused by:
@@ -200,6 +192,8 @@ class insertGenerator:
 							curColumn['TYPE'], 
 							curColumn['MAXSIZE'],
 							curColumn['PERMITTEDVALUES'],
+							curColumn['FORBIDDENVALUES'],
+							curColumn['COMPLOGICAL'],
 							curColumn['REGEX']
 							)
 		

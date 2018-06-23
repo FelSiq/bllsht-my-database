@@ -7,6 +7,20 @@ class constraintMetadataBuilder:
 		Init a empty block of attribute information. All this
 		information will be necessary to construct correct
 		INSERT commands.
+
+		Dictionary keys meaning:
+		'TYPE': Data type of the correspondent attribute, 
+		'MAXSIZE': Maximum size related to the values of that column, 
+		'PERMITTEDVALUES': A set of valid values (CHECK IN constraints),
+		'FORBIDDENVALUES': A set of non-valid values (CHECK NOT IN constraints),
+		'COMPLOGICAL': A list of comparisons (>, <, =, !=, ...) 
+			and logical (AND, OR, NOT) CHECKS ,
+		'PK': Is this attribute a PRIMARY KEY?, 
+		'UNIQUE': Is this attribute UNIQUE?, 
+		'DEFVAL': Default value for that attribute, 
+		'NOTNULL': Is this attribute NOT NULL?, 
+		'FK': This attribute has a FOREIGN KEY?,
+		'REGEX': Pattern that values for this column should match
 	"""
 	def initColumnMetadata(self, attrType='', maxSize=-1):
 		return {
@@ -14,6 +28,7 @@ class constraintMetadataBuilder:
 			'MAXSIZE': maxSize, 
 			'PERMITTEDVALUES': set(),
 			'FORBIDDENVALUES': set(),
+			'COMPLOGICAL': [],
 			'PK': False, 
 			'UNIQUE': 0, 
 			'DEFVAL': '', 

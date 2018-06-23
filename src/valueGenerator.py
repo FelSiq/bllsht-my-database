@@ -202,6 +202,16 @@ class valueGenerator:
 			return bllshtUtils.quotes(ipAddress)
 
 		return None
+	
+	"""
+		Function dedicated to evaluate CHECK constraints
+		based on comparison (>, <, =, !=, <>, <=, >=) and 
+		logical (AND, OR, NOT) operations.
+
+		To be implemented.
+	"""
+	def check(self, value, expressions):
+		return True
 
 	"""
 
@@ -213,24 +223,38 @@ class valueGenerator:
 		varType, 
 		maxSize, 
 		permittedVals, 
+		forbiddenVals,
+		compLogicalExp,
 		regex):
 
-		value=str(self.genValue(
-			tableName,
-			column,
-			varType, 
-			maxSize,
-			permittedVals,
-			regex
-			))
+		validValue=False
+		while not validValue:
+			value=str(self.genValue(
+				tableName,
+				column,
+				varType, 
+				maxSize,
+				permittedVals,
+				regex
+				))
 
-		# POSTGRESQL want single quotes around thw
-		# very first curly brackets set
-		if varType.find('[') != -1:
-			# Single-quotes within a array must be
-			# converted to double-bllshtUtils.quotes.
-			value=value.replace("'", '"')
-			# Then, finally, single-quotes the entire
-			# array.
-			value=bllshtUtils.quotes(value)
+			# POSTGRESQL want single quotes around the
+			# very first curly brackets set
+			if varType.find('[') != -1:
+				# Single-quotes within a array must be
+				# converted to double-quotes.
+				value=value.replace("'", '"')
+				# Then, finally, single-quotes the entire
+				# array.
+				value=bllshtUtils.quotes(value)
+
+			# Check if the generated value is not in the
+			# set of forbidden values (CHECK NOT IN constraints)
+			validValue = value not in forbiddenVals
+			
+			# Check if generated value respects all
+			# CHECK constraints based on comparison and
+			# logic operations
+			validValue &= self.check(value, compLogicalExp)
+
 		return value
