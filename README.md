@@ -125,18 +125,23 @@ Note: Check out "examples/biggerOutputExample.sql" to get a idea of a bigger pro
 
 # Supported Data Types
 The program supports the following PostgreSQL data types:
-- SMALLINT
-- INTEGER
-- BIGINT
-- REAL
+- SMALLINT/INT2
+- INTEGER/INT/INT4
+- BIGINT/INT8
+- REAL/FLOAT8
 - MONEY
-- SMALLSERIAL/SERIAL/BIGSERIAL
-- BOOLEAN
-- VARCHAR/VARCHAR2
+- SMALLSERIAL/SERIAL2
+- SERIAL/SERIAL4
+- BIGSERIAL/SERIAL8
+- BOOLEAN/BOOL
+- VARCHAR/VARCHAR2/TEXT/CHARACTER VARYING
 - CHAR/CHARACTER
 - DATE
 - TIME
 - TIMESTAMP
+- BIT
+- VARBIT/BIT VARYING
+- INET
 
 # IMPORTANT NOTES
 - Every table with SERIAL or BIGSERIAL column types must be brand-new (i.e. the autoincrementing counter must be currently on 1) in order to FOREIGN KEYS pointing to SERIAL/BIGSERIAL columns work,
