@@ -63,14 +63,12 @@ class insertGenerator:
 					reFindDate=regex.compile(r'([0-9]{4})\-([0-9]{2})\-([0-9]{2})')
 					m=reFindDate.search(value)
 					if m:
-						#value=(m.group(1), m.group(2), m.group(3))
 						value=tuple(map(int, m.groups()))
 
 				elif refColType == 'TIME':
 					reFindTime=regex.compile(r'([0-9]{2})\:([0-9]{2})\:([0-9]{2})')
 					m=reFindTime.search(value)
 					if m:
-						#value=(m.group(1), m.group(2), m.group(3))
 						value=tuple(map(int, m.groups()))
 
 				elif refColType == 'TIMESTAMP':
@@ -79,12 +77,10 @@ class insertGenerator:
 
 					mTime=reFindTime.search(value)
 					if mTime:
-						#valueTime=(mTime.group(1), mTime.group(2), mTime.group(3))
 						valueTime=tuple(map(int, mTime.groups()))
 
 					mDate=reFindDate.search(value)
 					if mDate:
-						#valueDate=(mDate.group(1), mDate.group(2), mDate.group(3))
 						valueDate=tuple(map(int, mDate.groups()))
 
 					value=(mDate, mTime)
@@ -210,7 +206,7 @@ class insertGenerator:
 	"""
 
 	"""
-	def getFKValues(self, tableName, dbFKHandler, generatedValues, curTable, instNum):
+	def getFKValues(self, tableName, dbFKHandler, generatedValues, curTable, instNum, shuffleFK=True):
 		# 
 		maxUniqueLevel=0
 		for column in curTable:
@@ -251,8 +247,15 @@ class insertGenerator:
 
 					# For simplicity, do not consider the NULL values instances
 					# at the tableName corresponding to the FOREIGN KEYS
-					sampleInst[fkTable]=random.randint(0, instNum, 
-						size=defSize)
+
+					if shuffleFK:
+						sampleInst[fkTable]=random.randint(0, instNum, 
+							size=defSize)
+					else:
+						print('/* Here comes a CHECK comparison */')
+						sampleInst[fkTable]=random.randint(0, instNum, 
+							size=defSize)
+						
 
 					for curTableCol, refTableCol in zip(dic['FKCOLS'],
 						dbFKHandler['PK'][fkTable]):
@@ -335,10 +338,17 @@ class insertGenerator:
 					for column in curTable.keys():
 						generatedValues[tableName][column]=[]
 
+					# Check if there is any comparison-based CHECK constraints
+					shuffleFK=True
+					for column in curTable:
+						shuffleFK &= len(curTable[column]['COMPLOGICAL']) == 0
+						if not shuffleFK:
+							break
+
 					# Get the PRIMARY KEY values of the tables referenced 
 					# by the current tableName FOREIGN keys
-					curInsertFKValues=self.getFKValues(tableName, 
-						dbFKHandler, generatedValues, curTable, instNum)
+					curInsertFKValues=self.getFKValues(tableName, dbFKHandler, 
+						generatedValues, curTable, instNum, shuffleFK)
 
 					# Generate common instances (with non null values)
 					for i in range(instNum):

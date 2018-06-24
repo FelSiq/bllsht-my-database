@@ -354,12 +354,12 @@ class valueGenerator:
 			op, compValue = e
 			
 			if op == '=':
-				if minValidVal is not None:
+				if minValidVal is None:
 					minValidVal = compValue
 				else:
 					possible &= minValidVal == compValue
 
-				if maxValidVal is not None:
+				if maxValidVal is None:
 					maxValidVal = compValue
 				else:
 					possible &= minValidVal == compValue
