@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from .configme import *
+from .bllshtUtils import *
 import regex
 
 class constraintMetadataBuilder:
@@ -69,13 +70,16 @@ class constraintMetadataBuilder:
 		reConstraintUn=regex.compile(
 			r'UNIQUE\s*\(([^)]+)\)', regex.IGNORECASE)
 		reConstraintCI=regex.compile(
-			r'\CHECK\s*\([^(]*\(([^)]+)\)'+
+			r'CHECK\s*\([^(]*\(([^)]+)\)'+
 			r'\s*IN\s*\(([^)]+)\)\s*\)', regex.IGNORECASE)
+		reConstraintCComp=regex.compile(
+			r'CHECK\s*\(\s*([^\s]+)\s*([=><]+)\s*([^\s]+)\s*\)', 
+			regex.IGNORECASE)
 		reConstraintCNI=regex.compile(
-			r'\CHECK\s*\([^(]*\(([^)]+)\)'+
+			r'CHECK\s*\([^(]*\(([^)]+)\)'+
 			r'\s*NOT\s*IN\s*\(([^)]+)\)\s*\)', regex.IGNORECASE)
 		reConstraintRE=regex.compile(
-			r'\CHECK\s*\(\s*([^\s]+)'+
+			r'CHECK\s*\(\s*([^\s]+)'+
 			r"\s*(?:~|SIMILAR\s*TO)\s*'([^']+)'\s*\)", regex.IGNORECASE)
 		reConstraintNN=regex.compile(
 			r'([^\s]+).*NOT\s*NULL\s*', regex.IGNORECASE)
@@ -222,6 +226,22 @@ class constraintMetadataBuilder:
 							curErrorTable.append(('REGEX:',
 								'COLUMN NOT EXITS', currentCommand))
 							errorCounter+=1
+
+					# check comparisons (supporting only A op B or c op B or A op c, c constant)
+					matchComp=reConstraintCComp.search(currentCommand)
+					if matchComp:
+						valOrColumnA=matchComp.group(1)
+						operator=matchComp.group(2)
+						valOrColumnB=matchComp.group(3)
+
+						isAColumn = valOrColumnA in curTable
+						isBColumn = valOrColumnB in curTable
+
+						if isAColumn:
+							curTable[valOrColumnA]['COMPLOGICAL'].append((operator, valOrColumnB, isBColumn))
+						if isBColumn:
+							curTable[valOrColumnB]['COMPLOGICAL'].append(\
+								(bllshtUtils.symmetricOperator(operator), valOrColumnA, isAColumn))
 				else:
 					# Attribute/Column declaration
 					match=reDeclareAttr.search(currentCommand)

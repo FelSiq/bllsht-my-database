@@ -11,3 +11,16 @@ class bllshtUtils:
 	def quotes(string):
 		return '\''+string+'\''
 
+	
+	def symmetricOperator(operator):
+		if operator == '>=':
+			return '<='
+		elif operator == '<=':
+			return '>='
+		elif operator == '<':
+			return '>'
+		elif operator == '>':
+			return '<'
+
+		# Assume operator is commutative
+		return operator

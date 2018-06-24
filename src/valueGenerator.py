@@ -189,6 +189,7 @@ class valueGenerator:
 			smpVal=random.choice(list(permittedValues))
 			if canonicalVT in ('MONEY', 'REAL', 'FLOAT8', 'INT', 'INT2', \
 				'INT4', 'INT8', 'SMALLINT', 'INTEGER', 'BIGINT'):
+				# HERE verify limit values
 				return smpVal
 			return ('B' if canonicalVT in ('BIT', 'VARBIT') else '') + bllshtUtils.quotes(smpVal)
 
@@ -290,7 +291,7 @@ class valueGenerator:
 		This is a very naive solution, but should
 		work.
 	"""
-	def checkConstraintsVals(self, expressions):
+	def checkConstraintsIntervals(self, expressions, dataType):
 		"""
 		Assuming "expressions" is in the form
 		expressions = [
@@ -310,8 +311,9 @@ class valueGenerator:
 		maxValidVal=None
 		forbiddenVals=set()
 		possible=True
+		canonicalDT = dataType.upper()
 		for e in expressions:
-			op, compValue = e[0]
+			op, compValue = e
 			
 			if op == '=':
 				if minValidVal is not None:
@@ -325,7 +327,8 @@ class valueGenerator:
 					possible &= minValidVal == compValue
 
 			elif op == '<>' or op == '!=':
-				forbiddenVals.union({compValue})
+				# HERE Will not work with DATE, TIME or TIMESTAMP
+				forbiddenVals.union({str(compValue)})
 				if maxValidVal is not None and maxValidVal == minValidVal:
 					possible &= (maxValidVal != compValue)
 
@@ -333,13 +336,56 @@ class valueGenerator:
 				minValidVal = compValue
 
 			elif op == '>':
-				minValidVal = compValue + 1
+				if canonicalDT == 'TIME':
+					minValidVal = list(compValue)
+					# minValidVal = (hour, minute, second)
+					# Increment a second
+					minValidVal[2] += 1
+					minute = minValidVal[2] // 60
+					minValidVal[1] += minute
+					hour = minValidVal[1] // 60
+					minValidVal[0] += hour
+					if minValidVal[0] // 24:
+						possible = False
+
+				elif canonicalDT == 'DATE':
+					minValidVal = list(compValue)
+					# minValidVal = (year, month, day)
+					# Increment a day
+					minValidVal[2] += 1
+					month = minValidVal[2] // 28
+					minValidVal[1] += month
+					year = minValidVal[1] // 365
+					minValidVal[0] += year
+
+				elif canonicalDT == 'TIMESTAMP':
+					minValidVal = list(map(list, compValue))
+					# minValidVal = ((year, month, day), (hour, minute, second))
+					# Increment a second
+					minValidVal[1][2] += 1
+					minute = minValidVal // 60
+					minValidVal[1][1] += minute
+					hour = minValidVal[1] // 60
+					minValidVal[1][0] += hour
+					day = hour // 24
+					minValidVal[0][2] += hour
+					month = minValidVal // 28
+					minValidVal[0][1] += month
+					year = minValidVal[1] // 365
+					minValidVal[0][0] += year
+					
+				else:
+					minValidVal = compValue + 1
 
 			elif op == '<=':
 				maxValidVal = compValue
 
 			elif op == '<':
-				maxValidVal = compValue - 1
+				# HERE Testing only...
+				if canonicalDT in ('DATE', 'TIME', 'TIMESTAMP'):
+					maxValidVal = compValue
+				else:
+					maxValidVal = compValue - 1
 
 			if not possible:
 				break 
@@ -367,7 +413,7 @@ class valueGenerator:
 
 		validValue=False
 		while not validValue:
-			minC, maxC, forbC, possible=self.checkConstraintsVals(compLogicalExp)
+			minC, maxC, forbC, possible=self.checkConstraintsIntervals(compLogicalExp, varType)
 
 			# Check if given comparison constraints are
 			# fair enough to gen a valid value
@@ -391,8 +437,7 @@ class valueGenerator:
 				# Single-quotes within a array must be
 				# converted to double-quotes.
 				value=value.replace("'", '"')
-				# Then, finally, single-quotes the entire
-				# array.
+				# Then, finally, single-quotes the entire array.
 				value=bllshtUtils.quotes(value)
 
 			# Check if the generated value is not in the

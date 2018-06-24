@@ -1,4 +1,5 @@
 from collections import OrderedDict
+import regex
 import numpy.random as random
 from .valueGenerator import valueGenerator
 from .bllshtUtils import bllshtUtils
@@ -27,6 +28,71 @@ class insertGenerator:
 			keys.pop(i)
 
 		return keys
+
+	def solveCompLogical(self, columnName, curTable, curTableGenValues):
+		compLogicalSolved=[]
+		for c in curTable[columnName]['COMPLOGICAL']:
+			isBColumn = c[2]
+		
+			if isBColumn:
+				refColumn = c[1]
+				# For each comparison-based CHECK constrain...
+				refValNum = len(curTableGenValues[refColumn])
+				curValNum = len(curTableGenValues[columnName])
+				value=curTableGenValues[refColumn][-1]
+				refColType=curTable[refColumn]['TYPE'].upper()
+			else:
+				value = c[1]
+				refColType=curTable[columnName]['TYPE'].upper()
+
+			if isBColumn == False or refValNum > curValNum:
+				# This means that the correspondent
+				# value from the other column are al-
+				# ready generated.
+				operator=c[0]
+
+				if refColType in ('INT', 'INT2', 'INT4', 'INT8', \
+					'SMALLINT', 'BIGINT', 'INTEGER', 'SERIAL', 'SMALLSERIAL', \
+					'BIGSERIAL', 'SERIAL2', 'SERIAL4', 'SERIAL8'):
+					value=int(value)
+
+				elif refColType in ('MONEY', 'REAL', 'FLOAT8', 'NUMERIC'):
+					value=float(value)
+
+				elif refColType == 'DATE':
+					reFindDate=regex.compile(r'([0-9]{4})\-([0-9]{2})\-([0-9]{2})')
+					m=reFindDate.search(value)
+					if m:
+						#value=(m.group(1), m.group(2), m.group(3))
+						value=tuple(map(int, m.groups()))
+
+				elif refColType == 'TIME':
+					reFindTime=regex.compile(r'([0-9]{2})\:([0-9]{2})\:([0-9]{2})')
+					m=reFindTime.search(value)
+					if m:
+						#value=(m.group(1), m.group(2), m.group(3))
+						value=tuple(map(int, m.groups()))
+
+				elif refColType == 'TIMESTAMP':
+					reFindDate=regex.compile(r'([0-9]{4})\-([0-9]{2})\-([0-9]{2})')
+					reFindTime=regex.compile(r'([0-9]{2})\:([0-9]{2})\:([0-9]{2})')
+
+					mTime=reFindTime.search(value)
+					if mTime:
+						#valueTime=(mTime.group(1), mTime.group(2), mTime.group(3))
+						valueTime=tuple(map(int, mTime.groups()))
+
+					mDate=reFindDate.search(value)
+					if mDate:
+						#valueDate=(mDate.group(1), mDate.group(2), mDate.group(3))
+						valueDate=tuple(map(int, mDate.groups()))
+
+					value=(mDate, mTime)
+
+				compLogicalSolved.append((operator, value))
+			# Otherwise, its not this column concern this verification.
+			
+		return compLogicalSolved
 
 	"""
 		Creates a entire valid INSERT command
@@ -72,6 +138,19 @@ class insertGenerator:
 					blockCommand=True
 
 			elif column != genNullAt:
+				# Solve comparison based CHECK constraints in
+				# the current column perspective
+				compLogicalSolved = self.solveCompLogical(column, curTable, curGenValues)
+				"""
+					Expected compLogicalSolved output general model:
+					
+					compLogicalSolved = [
+						(operator_0, value_0),
+						(operator_1, value_1),
+						...	
+						(operator_n, value_n),
+					]
+				"""
 
 				validValue=False
 				while not validValue:
@@ -83,7 +162,7 @@ class insertGenerator:
 						curColumn['MAXSIZE'],
 						curColumn['PERMITTEDVALUES'],
 						curColumn['FORBIDDENVALUES'],
-						curColumn['COMPLOGICAL'],
+						compLogicalSolved,
 						curColumn['REGEX']
 						)
 
@@ -307,7 +386,8 @@ class insertGenerator:
 					tableErrorTries=0
 					# Finished current table.
 				except Exception as e:
-					print(sys.exc_info().tb_lineno)
+					print(str(e), '\n', sys.exc_info(), sys.exc_info().tb_lineno)
+					
 					tableErrorTries-=1
 
 		print('/* TABLE NUMBER TOTAL:', tableNumTotal, '*/')
