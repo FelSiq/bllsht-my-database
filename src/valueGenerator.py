@@ -1,4 +1,5 @@
 import numpy.random as random
+from numpy import array
 from numpy import inf
 from .configme import *
 from .bllshtUtils import bllshtUtils
@@ -110,6 +111,23 @@ class valueGenerator:
 			('0' if len(s)==1 else '')+s
 		])
 
+	def _toDate(self, date):
+		if type(date) is not type(''):
+			date = '-'.join(date)
+
+		return 'to_date (' +\
+			bllshtUtils.quotes(date) +\
+			', ' + bllshtUtils.quotes('YYYY-MM-DD') + ')'
+
+	def _toTimestamp(self, date, time):
+		if type(date) is not type(''):
+			date = '-'.join(date)
+		if type(time) is not type(''):
+			time = ':'.join(time)
+
+		return 'to_timestamp (' +\
+			bllshtUtils.quotes(date + ' ' + time) + ', ' +\
+			bllshtUtils.quotes('YYYY-MM-DD HH24:MI:SS') + ')'
 
 	"""
 		Generate a random value, based on various constraints
@@ -176,7 +194,7 @@ class valueGenerator:
 				return bllshtUtils.quotes(processed)
 
 			# In case everything goes wrong.
-			# This is probably due to bad user configurarion.
+			# This is probably due to bad user configuration.
 			return 'NULL'
 
 		elif regexPat != '':
@@ -186,12 +204,34 @@ class valueGenerator:
 		# values, then just sample a random value from
 		# this set
 		elif permittedValues is not None and len(permittedValues) > 0:
-			smpVal=random.choice(list(permittedValues))
-			if canonicalVT in ('MONEY', 'REAL', 'FLOAT8', 'INT', 'INT2', \
-				'INT4', 'INT8', 'SMALLINT', 'INTEGER', 'BIGINT'):
-				# HERE verify limit values
-				return smpVal
-			return ('B' if canonicalVT in ('BIT', 'VARBIT') else '') + bllshtUtils.quotes(smpVal)
+			enquote=True
+			uniformProb=False
+
+			if canonicalVT in ('INT', 'INT2', 'INT4', 'INT8', \
+				'SMALLINT', 'INTEGER', 'BIGINT'):
+				enquote=False
+				castedPV=map(int, permittedValues)
+					
+			elif canonicalVT in ('FLOAT8', 'REAL', 'MONEY'):
+				enquote=False
+				castedPV=map(float, permittedValues)
+
+			elif canonicalVT in ('BIT', 'VARBIT'):
+				castedPV=[int(pv, 2) for pv in permittedValues]
+			else:
+				uniformProb=True
+				castedPV=permittedValues
+
+			sizePV=len(permittedValues)
+			pVec=array([1.0] * sizePV)
+			if not uniformProb:
+				for i in range(sizePV):
+					pVec[i]=int(minValue <= castedPV[i] <= maxValue)
+
+			pVec /= sum(pVec)
+			smpVal = random.choice(list(permittedValues), p=pVec)
+			smpVal = bllshtUtils.quotes(smpVal) if enquote else smpVal
+			return ('B' if canonicalVT in ('BIT', 'VARBIT') else '') + smpVal 
 
 		elif reCheckChar.search(canonicalVT):
 			
@@ -237,9 +277,8 @@ class valueGenerator:
 				min(maxValue, scriptConfig.MAX_BIGINT)+1))
 
 		elif canonicalVT == 'DATE':
-			return 'to_date (' +\
-				bllshtUtils.quotes(self._randDATE(maxValue, minValue)) +\
-				', ' + bllshtUtils.quotes('YYYY-MM-DD') + ')'
+			value=self._randDATE(maxValue, minValue)
+			return self._toDate(value)
 
 		elif canonicalVT in ('BOOLEAN', 'BOOL'):
 			return random.choice(['TRUE', 'FALSE'])
@@ -272,11 +311,10 @@ class valueGenerator:
 			minDate, minTime = minValue if \
 				isinstance(minValue, collections.Iterable) else (None, None)
 
-			return 'to_timestamp (' +\
-				bllshtUtils.quotes( \
-				self._randDATE(maxDate, minDate) +\
-				' ' + self._randTIME(maxTime, minTime)) + ', ' +\
-				bllshtUtils.quotes('YYYY-MM-DD HH24:MI:SS') +')'
+			date=self._randDATE(maxDate, minDate)
+			time=self._randTIME(maxTime, minTime)
+
+			return self._toTimestamp(date, time)
 
 		elif canonicalVT == 'INET':
 			ipAddress=fake.ipv6() if scriptConfig.INET_DATATYPE_IPV6 else fake.ipv4()
@@ -327,8 +365,14 @@ class valueGenerator:
 					possible &= minValidVal == compValue
 
 			elif op == '<>' or op == '!=':
-				# HERE Will not work with DATE, TIME or TIMESTAMP
-				forbiddenVals.union({str(compValue)})
+				if canonicalDT == 'DATE':
+					forbVal = self._toDate(compValue)
+				elif canonicalDT == 'TIMESTAMP':
+					forbVal = self._toTimestamp(compValue[0], compValue[1])
+				else:
+					forbVal = str(compValue)
+
+				forbiddenVals.union({forbVal})
 				if maxValidVal is not None and maxValidVal == minValidVal:
 					possible &= (maxValidVal != compValue)
 

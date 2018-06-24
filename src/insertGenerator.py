@@ -386,8 +386,6 @@ class insertGenerator:
 					tableErrorTries=0
 					# Finished current table.
 				except Exception as e:
-					print(str(e), '\n', sys.exc_info(), sys.exc_info().tb_lineno)
-					
 					tableErrorTries-=1
 
 		print('/* TABLE NUMBER TOTAL:', tableNumTotal, '*/')
