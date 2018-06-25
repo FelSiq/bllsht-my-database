@@ -252,7 +252,6 @@ class insertGenerator:
 						sampleInst[fkTable]=random.randint(0, instNum, 
 							size=defSize)
 					else:
-						print('/* Here comes a CHECK comparison */')
 						sampleInst[fkTable]=random.randint(0, instNum, 
 							size=defSize)
 						
@@ -269,6 +268,7 @@ class insertGenerator:
 			for column in predefValues:
 				curColumn=curTable[column]
 				if curColumn['FK']=='' and curColumn['UNIQUE']:
+					compLogicalSolved = self.solveCompLogical(column, curTable, predefValues)
 					auxVals[column]=self.generator.genCanonicalValue(
 							tableName,
 							column,
@@ -276,7 +276,7 @@ class insertGenerator:
 							curColumn['MAXSIZE'],
 							curColumn['PERMITTEDVALUES'],
 							curColumn['FORBIDDENVALUES'],
-							curColumn['COMPLOGICAL'],
+							compLogicalSolved,
 							curColumn['REGEX']
 							)
 		
@@ -396,6 +396,7 @@ class insertGenerator:
 					tableErrorTries=0
 					# Finished current table.
 				except Exception as e:
+					''/2
 					tableErrorTries-=1
 
 		print('/* TABLE NUMBER TOTAL:', tableNumTotal, '*/')
